@@ -47,10 +47,11 @@ installTYPO3() {
     ddev composer config allow-plugins.typo3/cms-composer-installers true
     ddev composer require --no-interaction "typo3/cms-composer-installers:^4.0@rc"
 
-    echo 'Update typo3-console'
+    echo 'Update for typo3-console'
     ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
-    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
   fi
+
+  ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
 }
 
 ## Setup TYPO3
@@ -81,6 +82,7 @@ installIntroductionPackage() {
 
 ## Complete TYPO3 sysexts
 getAdditionalModules() {
+  ddev composer require "typo3/cms-adminpanel:^${TYPO3_VERSION}"
   ddev composer require "typo3/cms-filemetadata:^${TYPO3_VERSION}"
   ddev composer require "typo3/cms-linkvalidator:^${TYPO3_VERSION}"
   ddev composer require "typo3/cms-lowlevel:^${TYPO3_VERSION}"
