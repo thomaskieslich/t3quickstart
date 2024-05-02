@@ -94,7 +94,9 @@ getAdditionalModules() {
 }
 
 ## Clean System
-cleanSystem() {
+upgradeSystem() {
+  ddev composer update
+
   ddev ${TYPO3_CLI_COMMAND} install:fixfolderstructure -nq
   ddev ${TYPO3_CLI_COMMAND} database:updateschema -nq
   ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible -nq
@@ -130,7 +132,7 @@ install)
   setupTYPO3
   installIntroductionPackage
   getAdditionalModules
-  cleanSystem
+  upgradeSystem
   showStatus
   ;;
 delete)
