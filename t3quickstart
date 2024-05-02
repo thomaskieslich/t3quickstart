@@ -51,7 +51,9 @@ installTYPO3() {
     ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
   fi
 
-  ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+  if [ -n "${TYPO3_CONSOLE_VERSION}" ]; then
+    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+  fi
 }
 
 ## Setup TYPO3
@@ -67,7 +69,7 @@ setupTYPO3() {
 
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1
 installIntroductionPackage() {
-  ## Install Introduction Package
+  ## Install and remove Introduction Package
   if [ ${INSTALL_INTRODUCTION_PACKAGE} -eq 1 ]; then
     ddev composer require "typo3/cms-introduction:^${INTRODUCTION_VERSION}"
     ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible
