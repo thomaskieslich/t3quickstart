@@ -39,20 +39,18 @@ installTYPO3() {
   rm -f .DS_Store
   ddev composer create --yes --no-interaction typo3/cms-base-distribution:"^${TYPO3_VERSION}"
 
+  ddev composer config --no-interaction --unset platform
+
   ## better Structure v11
-  if [ ${TYPO3_BASE_VERSION} = 11 ]; then
+  if [ ${TYPO3_BASE_VERSION} -eq 11 ]; then
     echo 'Change cms-composer-installers for TYPO3 11'
     ddev composer config allow-plugins.typo3/cms-composer-installers true
     ddev composer require --no-interaction "typo3/cms-composer-installers:^4.0@rc"
-  fi
 
-  ddev composer config --no-interaction --unset platform
-
-  if [ ${TYPO3_BASE_VERSION} / ] >10; then
-    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+    echo 'Update typo3-console'
     ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
+    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
   fi
-
 }
 
 ## Setup TYPO3
@@ -69,7 +67,7 @@ setupTYPO3() {
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1
 installIntroductionPackage() {
   ## Install Introduction Package
-  if [ ${INSTALL_INTRODUCTION_PACKAGE} = 1 ]; then
+  if [ ${INSTALL_INTRODUCTION_PACKAGE} -eq 1 ]; then
     ddev composer require "typo3/cms-introduction:^${INTRODUCTION_VERSION}"
     ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible
     ddev composer remove typo3/cms-introduction
@@ -98,7 +96,7 @@ cleanSystem() {
   ddev ${TYPO3_CLI_COMMAND} install:fixfolderstructure -nq
   ddev ${TYPO3_CLI_COMMAND} database:updateschema -nq
   ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible -nq
-  if [ ${TYPO3_BASE_VERSION} = 10 ]; then
+  if [ ${TYPO3_BASE_VERSION} -eq 10 ]; then
     ddev typo3 upgrade:run -nq
     ddev ${TYPO3_CLI_COMMAND} cache:flush -nq
   else
