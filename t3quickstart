@@ -3,10 +3,14 @@
 set -x
 set +e
 
+TYPO3_BASE_VERSION=12
+
 ## Load Environment from .env File
-if [ -f ${BASH_SOURCE%/*}/.env ]; then
-  source "${BASH_SOURCE%/*}/.env"
-fi
+loadEnv() {
+  if [ -f ${BASH_SOURCE%/*}/.env.${TYPO3_BASE_VERSION} ]; then
+    source "${BASH_SOURCE%/*}/.env.${TYPO3_BASE_VERSION}"
+  fi
+}
 
 ## Create Project Directory
 createDirectory() {
@@ -33,23 +37,27 @@ setupDDEV() {
 installTYPO3() {
   ddev start
   rm -f .DS_Store
-  ddev composer create --yes --no-interaction typo3/cms-base-distribution:"^${TYPO3_BASE_VERSION}"
+  ddev composer create --yes --no-interaction typo3/cms-base-distribution:"^${TYPO3_VERSION}"
 
   ## better Structure v11
-  if [ ${TYPO3_BASE_VERSION} = 11.5 ]; then
+  if [ ${TYPO3_BASE_VERSION} = 11 ]; then
     echo 'Change cms-composer-installers for TYPO3 11'
     ddev composer config allow-plugins.typo3/cms-composer-installers true
     ddev composer require --no-interaction "typo3/cms-composer-installers:^4.0@rc"
   fi
 
   ddev composer config --no-interaction --unset platform
-  ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
-  ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+
+  if [ ${TYPO3_BASE_VERSION} / ] >10; then
+    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+    ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
+  fi
+
 }
 
 ## Setup TYPO3
 setupTYPO3() {
-  ddev typo3 install:setup \
+  ddev ${TYPO3_CLI_COMMAND} install:setup \
     --no-interaction \
     --admin-user-name=${TYPO3_USERNAME} \
     --admin-password=${TYPO3_PASSWORD} \
@@ -63,36 +71,45 @@ installIntroductionPackage() {
   ## Install Introduction Package
   if [ ${INSTALL_INTRODUCTION_PACKAGE} = 1 ]; then
     ddev composer require "typo3/cms-introduction:^${INTRODUCTION_VERSION}"
-    ddev typo3 install:extensionsetupifpossible
+    ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible
     ddev composer remove typo3/cms-introduction
 
     ## Reinstall Extensions
     ddev composer require "bk2k/bootstrap-package:^${BOOTSTRAP_PACKAGE_VERSION}"
     ddev composer require "b13/container:^${CONTAINER_VERSION}"
-    ddev composer require "typo3/cms-indexed-search:^${TYPO3_BASE_VERSION}"
+    ddev composer require "typo3/cms-indexed-search:^${TYPO3_VERSION}"
   fi
 }
 
 ## Complete TYPO3 sysexts
 getAdditionalModules() {
-  ddev composer require "typo3/cms-filemetadata:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-linkvalidator:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-lowlevel:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-opendocs:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-recycler:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-redirects:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-reports:^${TYPO3_BASE_VERSION}"
-  ddev composer require "typo3/cms-scheduler:^${TYPO3_BASE_VERSION}"
+  ddev composer require "typo3/cms-filemetadata:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-linkvalidator:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-lowlevel:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-opendocs:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-recycler:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-redirects:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-reports:^${TYPO3_VERSION}"
+  ddev composer require "typo3/cms-scheduler:^${TYPO3_VERSION}"
 }
 
 ## Clean System
 cleanSystem() {
-  ddev typo3 install:fixfolderstructure -n
-  ddev typo3 database:updateschema -n
-  ddev typo3 install:extensionsetupifpossible -n
-  ddev typo3 upgrade:run -n
-  ddev typo3 cache:flush -n
-  ddev typo3 cache:warmup -n
+  ddev ${TYPO3_CLI_COMMAND} install:fixfolderstructure -nq
+  ddev ${TYPO3_CLI_COMMAND} database:updateschema -nq
+  ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible -nq
+  if [ ${TYPO3_BASE_VERSION} = 10 ]; then
+    ddev typo3 upgrade:run -nq
+    ddev ${TYPO3_CLI_COMMAND} cache:flush -nq
+  else
+    ddev ${TYPO3_CLI_COMMAND} upgrade:run -nq
+    ddev ${TYPO3_CLI_COMMAND} cache:flush -nq
+    ddev ${TYPO3_CLI_COMMAND} cache:warmup -nq
+  fi
+}
+
+showStatus() {
+  ddev status
 }
 
 ## delete Project
@@ -105,7 +122,8 @@ deleteProject() {
 
 case "$1" in
 install)
-  resetProject
+  TYPO3_BASE_VERSION=$2
+  loadEnv
   createDirectory
   setupDDEV
   installTYPO3
@@ -113,8 +131,11 @@ install)
   installIntroductionPackage
   getAdditionalModules
   cleanSystem
+  showStatus
   ;;
 delete)
+  TYPO3_BASE_VERSION=$2
+  loadEnv
   deleteProject
   ;;
 *)
