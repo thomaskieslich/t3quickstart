@@ -118,10 +118,38 @@ showStatus() {
 
 ## delete Project
 deleteProject() {
-  cd ${PROJECT_NAME} || exit
-  ddev delete --omit-snapshot --yes
-  cd ..
-  rm -rf ${PROJECT_NAME}
+  # Check if PROJECT_NAME is set
+  if [ -z "$PROJECT_NAME" ]; then
+    echo "PROJECT_NAME is not set. Exiting."
+    exit 1
+  fi
+
+  # Check if the directory exists
+  if [ ! -d "$PROJECT_NAME" ]; then
+    echo "Directory $PROJECT_NAME does not exist. Exiting."
+    exit 1
+  fi
+
+  # Change directory and perform ddev commands
+  if cd "$PROJECT_NAME"; then
+    ddev stop
+    if ! ddev delete --omit-snapshot --yes; then
+      echo "Failed to delete project with ddev. Exiting."
+      exit 1
+    fi
+    cd ..
+  else
+    echo "Failed to change directory to $PROJECT_NAME. Exiting."
+    exit 1
+  fi
+
+  # Delete the directory
+  if rm -rf "$PROJECT_NAME"; then
+    echo "Successfully deleted project directory $PROJECT_NAME."
+  else
+    echo "Failed to delete project directory $PROJECT_NAME."
+    exit 1
+  fi
 }
 
 case "$1" in
