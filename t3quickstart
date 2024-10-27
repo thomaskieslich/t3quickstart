@@ -56,15 +56,18 @@ installTYPO3() {
   fi
 }
 
-## Setup TYPO3
+## Setup TYPO3 with Settings from .env
 setupTYPO3() {
   ddev ${TYPO3_CLI_COMMAND} install:setup \
+    --force \
     --no-interaction \
-    --admin-user-name=${TYPO3_USERNAME} \
-    --admin-password=${TYPO3_PASSWORD} \
     --use-existing-database \
-    --web-server-config=apache \
-    --site-name="TYPO3 ${TYPO3_BASE_VERSION}"
+    --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
+    --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
+    --site-name="${TYPO3_INSTALL_SITE_NAME}" \
+    --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
+    --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
+    --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}"
 }
 
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1

@@ -11,3 +11,8 @@ This is a script to create it from Environment.
 - `cd t3quick-12 && ddev stop`
 - delete Project by run `cd .. && ./t3quickstart delete 12`
 
+### TYPO3 13 with Introduction Package
+- Check Environments in .env.13
+- run `./t3quickstart install 13`
+- open https://t3quick-13.ddev.site/typo3 and use Credentials from .env.13
+- delete Project by run `./t3quickstart delete 13`
