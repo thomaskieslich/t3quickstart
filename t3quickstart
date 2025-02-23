@@ -3,13 +3,21 @@
 set -x
 set +e
 
-TYPO3_BASE_VERSION=12
+TYPO3_BASE_VERSION=
+PROJECT_NAME=
 
 ## Load Environment from .env File
 loadEnv() {
-  if [ -f ${BASH_SOURCE%/*}/.env.${TYPO3_BASE_VERSION} ]; then
-    source "${BASH_SOURCE%/*}/.env.${TYPO3_BASE_VERSION}"
+  if [ -f "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}" ]; then
+    source "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}"
   fi
+
+  if [ -z "${PROJECT_NAME}" ]; then
+    PROJECT_NAME="typo3-v${TYPO3_BASE_VERSION}"
+  fi
+
+#  [[ $TYPO3_BASE_VERSION == 10 ]] && TYPO3_CLI_COMMAND="typo3cms"
+
 }
 
 ## Create Project Directory
@@ -27,47 +35,192 @@ setupDDEV() {
     --database=${DATABASE_VERSION} \
     --project-type=typo3 \
     --docroot=public \
-    --web-environment="TYPO3_CONTEXT=Development" \
-    --disable-settings-management=false
+    --disable-settings-management=false \
+    --timezone=Europe/Berlin \
+    --web-environment="TYPO3_CONTEXT=Development"
 
   ddev config --web-environment-add="COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION}"
+
+  # Install phpMyadmin
+  ddev add-on get ddev/ddev-phpmyadmin
 }
 
 ## install TYPO3
 installTYPO3() {
-  ddev start
+  ddev start -y
+  find . -name '.DS_Store' -delete
   rm -f .DS_Store
-  ddev composer create --yes --no-interaction typo3/cms-base-distribution:"^${TYPO3_VERSION}"
+  ddev composer create --no-interaction typo3/cms-base-distribution:"^${TYPO3_VERSION}"
 
   ddev composer config --no-interaction --unset platform
 
   ## better Structure v11
-  if [ ${TYPO3_BASE_VERSION} -eq 11 ]; then
-    echo 'Change cms-composer-installers for TYPO3 11'
-    ddev composer config allow-plugins.typo3/cms-composer-installers true
-    ddev composer require --no-interaction "typo3/cms-composer-installers:^4.0@rc"
+  # if [ ${TYPO3_BASE_VERSION} -eq 11 ]; then
+  #   echo 'Change cms-composer-installers for TYPO3 11'
+  #   ddev composer config allow-plugins.typo3/cms-composer-installers true
+  #   ddev composer require --no-interaction "typo3/cms-composer-installers:^4.0@rc"
 
-    echo 'Update for typo3-console'
-    ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
-  fi
+  #   echo 'Update for typo3-console'
+  #   ddev exec "sed -i 's/typo3cms install:fixfolderstructure/typo3 install:fixfolderstructure/g' composer.json"
+  # fi
 
   if [ -n "${TYPO3_CONSOLE_VERSION}" ]; then
     ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
   fi
 }
 
+composerInstall() {
+  ddev start -y
+
+  ddev composer init \
+    --name="typo3/cms-base-distribution" \
+    --description="TYPO3 CMS Base Distribution" \
+    --type="project" \
+    --stability="stable" \
+    --license="GPL-2.0-or-later" \
+    --repository='{"type":"path","url":"packages/*"}' \
+    --quiet
+
+  ddev composer config --no-interaction allow-plugins.typo3/class-alias-loader true
+  ddev composer config --no-interaction allow-plugins.typo3/cms-composer-installers true
+
+  ddev composer config --no-interaction sort-packages true
+
+  ddev exec mkdir -p packages
+
+  TYPO3_VERSION=""
+  case $TYPO3_BASE_VERSION in
+  10) typo3_branch="10.4" ;;
+  11) typo3_branch="11.5" ;;
+  12) typo3_branch="12.4" ;;
+  13) typo3_branch="13.4" ;;
+  *) typo3_branch="main" ;;
+  esac
+
+  local package_version="^$typo3_branch"
+
+  ddev exec wget "https://raw.githubusercontent.com/TYPO3/typo3/$typo3_branch/.editorconfig"
+
+  ddev composer require --no-install \
+    "typo3/cms-adminpanel:$package_version" \
+    "typo3/cms-backend:$package_version" \
+    "typo3/cms-belog:$package_version" \
+    "typo3/cms-beuser:$package_version" \
+    "typo3/cms-core:$package_version" \
+    "typo3/cms-dashboard:$package_version" \
+    "typo3/cms-extbase:$package_version" \
+    "typo3/cms-extensionmanager:$package_version" \
+    "typo3/cms-felogin:$package_version" \
+    "typo3/cms-filelist:$package_version" \
+    "typo3/cms-filemetadata:$package_version" \
+    "typo3/cms-fluid:$package_version" \
+    "typo3/cms-fluid-styled-content:$package_version" \
+    "typo3/cms-form:$package_version" \
+    "typo3/cms-frontend:$package_version" \
+    "typo3/cms-impexp:$package_version" \
+    "typo3/cms-indexed-search:$package_version" \
+    "typo3/cms-info:$package_version" \
+    "typo3/cms-install:$package_version" \
+    "typo3/cms-linkvalidator:$package_version" \
+    "typo3/cms-lowlevel:$package_version" \
+    "typo3/cms-opendocs:$package_version" \
+    "typo3/cms-recycler:$package_version" \
+    "typo3/cms-redirects:$package_version" \
+    "typo3/cms-reports:$package_version" \
+    "typo3/cms-rte-ckeditor:$package_version" \
+    "typo3/cms-scheduler:$package_version" \
+    "typo3/cms-seo:$package_version" \
+    "typo3/cms-setup:$package_version" \
+    "typo3/cms-sys-note:$package_version" \
+    "typo3/cms-tstemplate:$package_version" \
+    "typo3/cms-viewpage:$package_version" \
+    "typo3/cms-workspaces:$package_version"
+
+  case $TYPO3_BASE_VERSION in
+  11)
+    ddev composer require --no-install \
+      "typo3/cms-t3editor:$package_version" \
+      "typo3/cms-recordlist:$package_version"
+    ;;
+  12)
+    ddev composer require --no-install \
+      "typo3/cms-t3editor:$package_version" \
+      "typo3/cms-reactions:$package_version" \
+      "typo3/cms-webhooks:$package_version"
+    ;;
+
+  13)
+    ddev composer require --no-install \
+      "typo3/cms-reactions:$package_version" \
+      "typo3/cms-webhooks:$package_version"
+    ;;
+  esac
+
+  if [ -n "$TYPO3_CONSOLE_VERSION" ]; then
+    ddev composer require --no-interaction "helhum/typo3-console:^${TYPO3_CONSOLE_VERSION}"
+  fi
+
+  ddev composer update
+}
+
 ## Setup TYPO3 with Settings from .env
 setupTYPO3() {
-  ddev ${TYPO3_CLI_COMMAND} install:setup \
-    --force \
-    --no-interaction \
-    --use-existing-database \
-    --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
-    --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
-    --site-name="${TYPO3_INSTALL_SITE_NAME}" \
-    --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
-    --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
-    --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}"
+  ddev config --auto
+
+  case $TYPO3_BASE_VERSION in
+  10 | 11)
+    ddev $TYPO3_CLI_COMMAND install:setup \
+      --use-existing-database \
+      --database-driver="mysqli" \
+      --database-host-name="db" \
+      --database-port="3306" \
+      --database-socket="" \
+      --database-name="db" \
+      --database-user-name="db" \
+      --database-user-password="db" \
+      --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
+      --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
+      --site-name="${TYPO3_INSTALL_SITE_NAME}" \
+      --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
+      --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}" \
+      --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
+      --force \
+      --no-interaction
+    ;;
+  *)
+    # Tip: You may want to add the option --create-site="https://${PWD##*/}.ddev.site/"
+    # to create a site configuration independently of the initialization of my site package
+    ddev $TYPO3_CLI_COMMAND setup \
+      --driver="mysqli" \
+      --host="db" \
+      --port=3306 \
+      --dbname="db" \
+      --username="db" \
+      --password="db" \
+      --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
+      --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
+      --admin-email="admin@ddev.site" \
+      --site-name="${TYPO3_INSTALL_SITE_NAME}" \
+      --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
+      --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}" \
+      --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
+      --project-name="${PROJECT_NAME}" \
+      --server-type="apache" \
+      --force \
+      --no-interaction
+    ;;
+  esac
+
+  #  ddev ${TYPO3_CLI_COMMAND} install:setup \
+  #    --force \
+  #    --no-interaction \
+  #    --use-existing-database \
+  #    --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
+  #    --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
+  #    --site-name="${TYPO3_INSTALL_SITE_NAME}" \
+  #    --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
+  #    --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
+  #    --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}"
 }
 
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1
@@ -151,25 +304,28 @@ deleteProject() {
     echo "Successfully deleted project directory $PROJECT_NAME."
   else
     echo "Failed to delete project directory $PROJECT_NAME."
-    exit 1
+    rm -rf "$PROJECT_NAME"
   fi
 }
 
 case "$1" in
 install)
-  TYPO3_BASE_VERSION=$2
+  TYPO3_BASE_VERSION=${2:-13}
+  PROJECT_NAME="${3:-}"
   loadEnv
   createDirectory
   setupDDEV
-  installTYPO3
+  composerInstall
+  #  _installTYPO3
   setupTYPO3
-  installIntroductionPackage
-  getAdditionalModules
-  upgradeSystem
-  showStatus
+  #  installIntroductionPackage
+  #  getAdditionalModules
+  #  upgradeSystem
+  #  showStatus
   ;;
 delete)
-  TYPO3_BASE_VERSION=$2
+  TYPO3_BASE_VERSION=${2:-13}
+  PROJECT_NAME="${3:-}"
   loadEnv
   deleteProject
   ;;
