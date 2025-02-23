@@ -4,6 +4,7 @@ set -x
 set +e
 
 TYPO3_BASE_VERSION=
+TYPO3_PACKAGE_VERSION=
 PROJECT_NAME=
 
 ## Load Environment from .env File
@@ -16,7 +17,7 @@ loadEnv() {
     PROJECT_NAME="typo3-v${TYPO3_BASE_VERSION}"
   fi
 
-#  [[ $TYPO3_BASE_VERSION == 10 ]] && TYPO3_CLI_COMMAND="typo3cms"
+  #  [[ $TYPO3_BASE_VERSION == 10 ]] && TYPO3_CLI_COMMAND="typo3cms"
 
 }
 
@@ -88,7 +89,6 @@ composerInstall() {
 
   ddev exec mkdir -p packages
 
-  TYPO3_VERSION=""
   case $TYPO3_BASE_VERSION in
   10) typo3_branch="10.4" ;;
   11) typo3_branch="11.5" ;;
@@ -97,62 +97,62 @@ composerInstall() {
   *) typo3_branch="main" ;;
   esac
 
-  local package_version="^$typo3_branch"
+  TYPO3_PACKAGE_VERSION="^$typo3_branch"
 
   ddev exec wget "https://raw.githubusercontent.com/TYPO3/typo3/$typo3_branch/.editorconfig"
 
   ddev composer require --no-install \
-    "typo3/cms-adminpanel:$package_version" \
-    "typo3/cms-backend:$package_version" \
-    "typo3/cms-belog:$package_version" \
-    "typo3/cms-beuser:$package_version" \
-    "typo3/cms-core:$package_version" \
-    "typo3/cms-dashboard:$package_version" \
-    "typo3/cms-extbase:$package_version" \
-    "typo3/cms-extensionmanager:$package_version" \
-    "typo3/cms-felogin:$package_version" \
-    "typo3/cms-filelist:$package_version" \
-    "typo3/cms-filemetadata:$package_version" \
-    "typo3/cms-fluid:$package_version" \
-    "typo3/cms-fluid-styled-content:$package_version" \
-    "typo3/cms-form:$package_version" \
-    "typo3/cms-frontend:$package_version" \
-    "typo3/cms-impexp:$package_version" \
-    "typo3/cms-indexed-search:$package_version" \
-    "typo3/cms-info:$package_version" \
-    "typo3/cms-install:$package_version" \
-    "typo3/cms-linkvalidator:$package_version" \
-    "typo3/cms-lowlevel:$package_version" \
-    "typo3/cms-opendocs:$package_version" \
-    "typo3/cms-recycler:$package_version" \
-    "typo3/cms-redirects:$package_version" \
-    "typo3/cms-reports:$package_version" \
-    "typo3/cms-rte-ckeditor:$package_version" \
-    "typo3/cms-scheduler:$package_version" \
-    "typo3/cms-seo:$package_version" \
-    "typo3/cms-setup:$package_version" \
-    "typo3/cms-sys-note:$package_version" \
-    "typo3/cms-tstemplate:$package_version" \
-    "typo3/cms-viewpage:$package_version" \
-    "typo3/cms-workspaces:$package_version"
+    "typo3/cms-adminpanel:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-backend:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-belog:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-beuser:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-core:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-dashboard:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-extbase:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-extensionmanager:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-felogin:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-filelist:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-filemetadata:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-fluid:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-fluid-styled-content:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-form:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-frontend:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-impexp:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-indexed-search:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-info:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-install:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-linkvalidator:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-lowlevel:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-opendocs:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-recycler:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-redirects:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-reports:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-rte-ckeditor:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-scheduler:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-seo:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-setup:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-sys-note:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-tstemplate:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-viewpage:$TYPO3_PACKAGE_VERSION" \
+    "typo3/cms-workspaces:$TYPO3_PACKAGE_VERSION"
 
   case $TYPO3_BASE_VERSION in
   11)
     ddev composer require --no-install \
-      "typo3/cms-t3editor:$package_version" \
-      "typo3/cms-recordlist:$package_version"
+      "typo3/cms-t3editor:$TYPO3_PACKAGE_VERSION" \
+      "typo3/cms-recordlist:$TYPO3_PACKAGE_VERSION"
     ;;
   12)
     ddev composer require --no-install \
-      "typo3/cms-t3editor:$package_version" \
-      "typo3/cms-reactions:$package_version" \
-      "typo3/cms-webhooks:$package_version"
+      "typo3/cms-t3editor:$TYPO3_PACKAGE_VERSION" \
+      "typo3/cms-reactions:$TYPO3_PACKAGE_VERSION" \
+      "typo3/cms-webhooks:$TYPO3_PACKAGE_VERSION"
     ;;
 
   13)
     ddev composer require --no-install \
-      "typo3/cms-reactions:$package_version" \
-      "typo3/cms-webhooks:$package_version"
+      "typo3/cms-reactions:$TYPO3_PACKAGE_VERSION" \
+      "typo3/cms-webhooks:$TYPO3_PACKAGE_VERSION"
     ;;
   esac
 
@@ -180,7 +180,7 @@ setupTYPO3() {
       --database-user-password="db" \
       --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
       --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
-      --site-name="${TYPO3_INSTALL_SITE_NAME}" \
+      --site-name="TYPO3 ${TYPO3_BASE_VERSION}" \
       --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
       --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}" \
       --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
@@ -197,13 +197,9 @@ setupTYPO3() {
       --dbname="db" \
       --username="db" \
       --password="db" \
-      --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
-      --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
+      --admin-username="${TYPO3_INSTALL_ADMIN_USER}" \
+      --admin-user-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
       --admin-email="admin@ddev.site" \
-      --site-name="${TYPO3_INSTALL_SITE_NAME}" \
-      --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
-      --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}" \
-      --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
       --project-name="${PROJECT_NAME}" \
       --server-type="apache" \
       --force \
@@ -211,44 +207,22 @@ setupTYPO3() {
     ;;
   esac
 
-  #  ddev ${TYPO3_CLI_COMMAND} install:setup \
-  #    --force \
-  #    --no-interaction \
-  #    --use-existing-database \
-  #    --admin-user-name="${TYPO3_INSTALL_ADMIN_USER}" \
-  #    --admin-password="${TYPO3_INSTALL_ADMIN_PASSWORD}" \
-  #    --site-name="${TYPO3_INSTALL_SITE_NAME}" \
-  #    --web-server-config="${TYPO3_INSTALL_WEB_SERVER_CONFIG}" \
-  #    --site-setup-type="${TYPO3_INSTALL_SITE_SETUP_TYPE}" \
-  #    --site-base-url="${TYPO3_INSTALL_SITE_BASE_URL}"
+  if [ -n "${INTRODUCTION_VERSION}" ]; then
+    installIntroductionPackage
+  fi
 }
 
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1
 installIntroductionPackage() {
   ## Install and remove Introduction Package
-  if [ ${INSTALL_INTRODUCTION_PACKAGE} -eq 1 ]; then
-    ddev composer require "typo3/cms-introduction:^${INTRODUCTION_VERSION}"
-    ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible
-    ddev composer remove typo3/cms-introduction
+  ddev composer require "typo3/cms-introduction:^${INTRODUCTION_VERSION}"
+  ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible
+  ddev composer remove typo3/cms-introduction
 
-    ## Reinstall Extensions
-    ddev composer require "bk2k/bootstrap-package:^${BOOTSTRAP_PACKAGE_VERSION}"
-    ddev composer require "b13/container:^${CONTAINER_VERSION}"
-    ddev composer require "typo3/cms-indexed-search:^${TYPO3_VERSION}"
-  fi
-}
-
-## Complete TYPO3 sysexts
-getAdditionalModules() {
-  ddev composer require "typo3/cms-adminpanel:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-filemetadata:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-linkvalidator:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-lowlevel:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-opendocs:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-recycler:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-redirects:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-reports:^${TYPO3_VERSION}"
-  ddev composer require "typo3/cms-scheduler:^${TYPO3_VERSION}"
+  ## Reinstall Extensions
+  ddev composer require "bk2k/bootstrap-package:^${BOOTSTRAP_PACKAGE_VERSION}"
+  ddev composer require "b13/container:^${CONTAINER_VERSION}"
+  ddev composer require "typo3/cms-indexed-search:$TYPO3_PACKAGE_VERSION"
 }
 
 ## Clean System
@@ -257,12 +231,14 @@ upgradeSystem() {
 
   ddev ${TYPO3_CLI_COMMAND} install:fixfolderstructure -nq
   ddev ${TYPO3_CLI_COMMAND} database:updateschema -nq
-  ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible -nq
-  if [ ${TYPO3_BASE_VERSION} -eq 10 ]; then
+
+  if [ "$TYPO3_CLI_COMMAND" = "typo3cms" ]; then
     ddev typo3 upgrade:run -nq
+    ddev ${TYPO3_CLI_COMMAND} extension:setupactive -nq
     ddev ${TYPO3_CLI_COMMAND} cache:flush -nq
   else
     ddev ${TYPO3_CLI_COMMAND} upgrade:run -nq
+    ddev ${TYPO3_CLI_COMMAND} install:extensionsetupifpossible -nq
     ddev ${TYPO3_CLI_COMMAND} cache:flush -nq
     ddev ${TYPO3_CLI_COMMAND} cache:warmup -nq
   fi
@@ -316,12 +292,9 @@ install)
   createDirectory
   setupDDEV
   composerInstall
-  #  _installTYPO3
   setupTYPO3
-  #  installIntroductionPackage
-  #  getAdditionalModules
-  #  upgradeSystem
-  #  showStatus
+  upgradeSystem
+  showStatus
   ;;
 delete)
   TYPO3_BASE_VERSION=${2:-13}
