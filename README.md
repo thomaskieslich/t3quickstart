@@ -20,6 +20,7 @@ This is a script to create it from Environment.
 | `INSTALL_PHPMYADMIN` | `0` | Install ddev-phpmyadmin add-on |
 | `INSTALL_CAMINO_THEME` | `1` | Install Camino Theme (TYPO3 14+ only) |
 | `CREATE_PACKAGES_DIR` | `0` | Create `packages/` directory and register as Composer path repository for local extensions |
+| `GET_T3STATIC` | `0` | Clone t3static extension from Codeberg into `packages/t3static` |
 
 ## Usage
 Supported versions: 10, 11, 12, 13, 14

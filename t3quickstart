@@ -85,6 +85,10 @@ composerInstall() {
     ddev exec mkdir -p packages
   fi
 
+  if [ "${GET_T3STATIC:-0}" = "1" ]; then
+    ddev exec "git clone https://codeberg.org/kiesi/t3static.git t3static"
+  fi
+
   case $TYPO3_BASE_VERSION in
   10) typo3_branch="10.4" ;;
   11) typo3_branch="11.5" ;;
