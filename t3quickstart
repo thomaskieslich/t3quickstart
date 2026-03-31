@@ -94,6 +94,7 @@ composerInstall() {
   11) typo3_branch="11.5" ;;
   12) typo3_branch="12.4" ;;
   13) typo3_branch="13.4" ;;
+  14) typo3_branch="14.1" ;;
   *) typo3_branch="main" ;;
   esac
 
