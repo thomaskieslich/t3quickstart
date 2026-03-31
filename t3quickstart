@@ -201,6 +201,15 @@ setupTYPO3() {
   if [ -n "${INTRODUCTION_VERSION}" ]; then
     installIntroductionPackage
   fi
+
+  if [ "${INSTALL_CAMINO_THEME:-0}" = "1" ]; then
+    installCaminoTheme
+  fi
+}
+
+## Install Camino Theme if enabled
+installCaminoTheme() {
+  ddev composer require "typo3/theme-camino:^${CAMINO_VERSION}"
 }
 
 ## Installs necessary packages if INSTALL_INTRODUCTION_PACKAGE is set to 1
@@ -259,7 +268,7 @@ deleteProject() {
   # Change directory and perform ddev commands
   if cd "${PROJECT_NAME}"; then
     # Fix file ownership while containers are still running (Docker/Mutagen may create root-owned files)
-    ddev exec "chown -R \$(id -u):\$(id -g) /var/www/html 2>/dev/null || true" 2>/dev/null || true
+    ddev exec "sudo chown -R \$(id -u):\$(id -g) /var/www/html 2>/dev/null || true" 2>/dev/null || true
     ddev stop 2>/dev/null || true
     ddev delete --omit-snapshot --yes 2>/dev/null || true
   else
