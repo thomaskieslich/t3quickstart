@@ -3,16 +3,19 @@
 set -euo pipefail
 
 TYPO3_BASE_VERSION=
+TYPO3_CLI_PREFIX=
 PROJECT_NAME=
 
 ## Load Environment from .env File
 loadEnv() {
-  if [ -f "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}" ]; then
-    source "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}"
-  fi
-
+  ## Set PROJECT_NAME before sourcing so it's available in .env variables
   if [ -z "${PROJECT_NAME}" ]; then
     PROJECT_NAME="typo3-v${TYPO3_BASE_VERSION}"
+  fi
+  export PROJECT_NAME
+
+  if [ -f "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}" ]; then
+    source "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}"
   fi
 }
 
@@ -41,7 +44,9 @@ setupDDEV() {
 
   ddev config --web-environment-add="COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION}"
 
-  ddev add-on get ddev/ddev-phpmyadmin
+  if [ "${INSTALL_PHPMYADMIN:-0}" = "1" ]; then
+    ddev add-on get ddev/ddev-phpmyadmin
+  fi
 }
 
 composerInstall() {
@@ -60,6 +65,13 @@ composerInstall() {
   ddev composer config --no-interaction allow-plugins.typo3/cms-composer-installers true
 
   ddev composer config --no-interaction sort-packages true
+
+  ## Allow insecure packages for EOL TYPO3 versions (10, 11)
+  case $TYPO3_BASE_VERSION in
+  10 | 11)
+    ddev composer config --no-interaction audit.block-insecure false
+    ;;
+  esac
 
   ddev exec mkdir -p packages
 
@@ -144,6 +156,9 @@ setupTYPO3() {
 
   ## Drop and recreate database to ensure clean state
   ddev exec "mysql -u root -proot -e 'DROP DATABASE IF EXISTS ${TYPO3_INSTALL_DB_DBNAME}; CREATE DATABASE ${TYPO3_INSTALL_DB_DBNAME};'"
+
+  ## Remove auto-generated AdditionalConfiguration.php to prevent conflicts with install:setup
+  ddev exec "rm -f public/typo3conf/AdditionalConfiguration.php"
 
   case $TYPO3_BASE_VERSION in
   10 | 11)
@@ -238,23 +253,28 @@ deleteProject() {
     exit 1
   fi
 
+  # Store absolute path before changing directory
+  PROJECT_DIR="$(cd "${PROJECT_NAME}" && pwd)"
+
   # Change directory and perform ddev commands
   if cd "${PROJECT_NAME}"; then
-    ddev stop
-    if ! ddev delete --omit-snapshot --yes; then
-      echo "Failed to delete project with ddev. Exiting."
-      exit 1
-    fi
+    # Fix file ownership while containers are still running (Docker/Mutagen may create root-owned files)
+    ddev exec "chown -R \$(id -u):\$(id -g) /var/www/html 2>/dev/null || true" 2>/dev/null || true
+    ddev stop 2>/dev/null || true
+    ddev delete --omit-snapshot --yes 2>/dev/null || true
   else
     echo "Failed to change directory to ${PROJECT_NAME}. Exiting."
     exit 1
   fi
 
+  # Return to parent directory before deleting
+  cd ..
+
   # Delete the directory
-  if rm -rf "${PROJECT_NAME}"; then
-    echo "Successfully deleted project directory ${PROJECT_NAME}."
+  if rm -rf "${PROJECT_DIR}"; then
+    echo "Successfully deleted project directory ${PROJECT_DIR}."
   else
-    echo "Failed to delete project directory ${PROJECT_NAME}."
+    echo "Failed to delete project directory ${PROJECT_DIR}."
     exit 1
   fi
 }
