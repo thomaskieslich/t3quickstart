@@ -1,3 +1,7 @@
+<span style="color:red;">!!!</span> Original Repository on: https://codeberg.org/kiesi/t3quickstart <span style="color:red;">!!!</span>
+
+Mirror only on Github: https://github.com/thomaskieslich/t3quickstart
+
 # Quickstart a TYPO3 Project
 Sometimes i need a fresh TYPO3 Project with or without content. 
 This is a script to create it from Environment.
