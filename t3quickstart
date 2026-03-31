@@ -66,7 +66,6 @@ composerInstall() {
     --type="project" \
     --stability="stable" \
     --license="GPL-2.0-or-later" \
-    --repository='{"type":"path","url":"packages/*"}' \
     --quiet
 
   ddev composer config --no-interaction allow-plugins.typo3/class-alias-loader true
@@ -81,7 +80,10 @@ composerInstall() {
     ;;
   esac
 
-  ddev exec mkdir -p packages
+  if [ "${CREATE_PACKAGES_DIR:-0}" = "1" ]; then
+    ddev composer config --no-interaction repositories.local '{"type":"path","url":"packages/*"}'
+    ddev exec mkdir -p packages
+  fi
 
   case $TYPO3_BASE_VERSION in
   10) typo3_branch="10.4" ;;
