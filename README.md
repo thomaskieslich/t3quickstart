@@ -39,3 +39,51 @@ Der Projektordner wird automatisch als `typo3-v<version>` angelegt. Ein eigener 
 ```
 
 After installation, open `https://typo3-v<version>.ddev.site/typo3` and use the credentials from `.env.local`.
+
+## Local Extensions (packages directory)
+
+To use local extensions across multiple TYPO3 instances, create a shared `packages/` directory at the project root:
+
+```bash
+mkdir -p packages
+# Place or clone extensions here, e.g.:
+git clone https://github.com/example/my_extension.git packages/my_extension
+```
+
+### Option 1: Docker Mount (recommended)
+
+For each TYPO3 instance that should access the packages directory, create `.ddev/docker-compose.mount.yaml`:
+
+```yaml
+services:
+  web:
+    volumes:
+      - "../packages:/var/www/html/packages"
+```
+
+Then add to `composer.json`:
+
+```json
+{
+    "repositories": [{
+        "name": "local",
+        "type": "path",
+        "url": "packages/*"
+    }]
+}
+```
+
+Install the extension:
+```bash
+ddev composer require vendor/my_extension:@dev
+```
+
+### Option 2: Symlink
+
+Create a symlink inside the TYPO3 instance directory:
+
+```bash
+ln -s ../packages typo3-v13/packages
+```
+
+Then use the same `composer.json` configuration as above. The symlink is automatically mounted into the container.
