@@ -17,6 +17,14 @@ loadEnv() {
   if [ -f "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}" ]; then
     source "${BASH_SOURCE[0]%/*}/.env.${TYPO3_BASE_VERSION}"
   fi
+
+  ## Override with local secrets (not versioned)
+  if [ -f "${BASH_SOURCE[0]%/*}/.env.local" ]; then
+    source "${BASH_SOURCE[0]%/*}/.env.local"
+  elif [ -f "${BASH_SOURCE[0]%/*}/.env.local.dist" ]; then
+    echo -e "\033[33m⚠ No .env.local found. Copy .env.local.dist to .env.local and adjust values.\033[0m"
+    echo -e "\033[33m  cp .env.local.dist .env.local\033[0m"
+  fi
 }
 
 ## Create Project Directory
@@ -202,7 +210,7 @@ setupTYPO3() {
     installIntroductionPackage
   fi
 
-  if [ "${INSTALL_CAMINO_THEME:-0}" = "1" ]; then
+  if [ "${INSTALL_CAMINO_THEME:-0}" = "1" ] && [ "${TYPO3_BASE_VERSION}" -ge 14 ]; then
     installCaminoTheme
   fi
 }
