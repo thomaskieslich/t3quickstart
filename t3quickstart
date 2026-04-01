@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 TYPO3_BASE_VERSION=
 TYPO3_CLI_PREFIX=
 PROJECT_NAME=
@@ -48,12 +50,36 @@ setupDDEV() {
     --docroot=public \
     --disable-settings-management=false \
     --timezone=Europe/Berlin \
-    --web-environment="TYPO3_CONTEXT=Development"
+    --web-environment="TYPO3_CONTEXT=Development" \
+    --upload-dirs=../.ddev/backup,fileadmin
 
   ddev config --web-environment-add="COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION}"
 
   if [ "${INSTALL_PHPMYADMIN:-0}" = "1" ]; then
     ddev add-on get ddev/ddev-phpmyadmin
+    cat > .ddev/docker-compose.phpmyadmin_override.yaml << 'EOF'
+services:
+  phpmyadmin:
+    healthcheck:
+      disable: true
+    depends_on:
+      db:
+        condition: service_started
+EOF
+  fi
+
+  if [ "${CREATE_PACKAGES_DIR:-0}" = "1" ]; then
+    mkdir -p packages
+  elif [ "${CREATE_PACKAGES_DIR:-0}" = "2" ]; then
+    PACKAGES_ABS="$(cd "${SCRIPT_DIR}" && pwd)/packages"
+    mkdir -p "${PACKAGES_ABS}"
+    ln -sfn "${PACKAGES_ABS}" packages
+    cat > .ddev/docker-compose.packages.yaml << EOF
+services:
+  web:
+    volumes:
+      - "${PACKAGES_ABS}:/var/www/html/packages:cached"
+EOF
   fi
 }
 
@@ -82,7 +108,8 @@ composerInstall() {
 
   if [ "${CREATE_PACKAGES_DIR:-0}" = "1" ]; then
     ddev composer config --no-interaction repositories.local '{"type":"path","url":"packages/*"}'
-    ddev exec mkdir -p packages
+  elif [ "${CREATE_PACKAGES_DIR:-0}" = "2" ]; then
+    ddev composer config --no-interaction repositories.local '{"type":"path","url":"packages/*"}'
   fi
 
   if [ "${GET_T3STATIC:-0}" = "1" ]; then
