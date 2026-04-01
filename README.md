@@ -19,7 +19,7 @@ This is a script to create it from Environment.
 |----------|---------|-------------|
 | `INSTALL_PHPMYADMIN` | `0` | Install ddev-phpmyadmin add-on |
 | `INSTALL_CAMINO_THEME` | `1` | Install Camino Theme (TYPO3 14+ only) |
-| `CREATE_PACKAGES_DIR` | `0` | Create `packages/` directory for local extensions: `0`=none, `1`=local folder in project, `2`=symlink to shared `t3matrix/packages/` |
+| `CREATE_PACKAGES_DIR` | `0` | Create `packages/` directory for local extensions: `0`=none, `1`=local folder in project, `2`=mount shared `t3matrix/packages/` via Docker volume |
 | `GET_T3STATIC` | `0` | Clone t3static extension from Codeberg into `packages/t3static` |
 
 ## Usage
@@ -51,18 +51,18 @@ mkdir -p packages
 git clone https://github.com/example/my_extension.git packages/my_extension
 ```
 
-### Option 1: Docker Mount (recommended)
+### Docker Volume Mount (CREATE_PACKAGES_DIR=2)
 
-For each TYPO3 instance that should access the packages directory, create `.ddev/docker-compose.mount.yaml`:
+When using `CREATE_PACKAGES_DIR=2` in `.env.<version>` or `.env.local`, the script automatically creates `.ddev/docker-compose.packages.yaml` to mount the shared packages directory:
 
 ```yaml
 services:
   web:
     volumes:
-      - "../packages:/var/www/html/packages"
+      - "/absolute/path/to/t3matrix/packages:/var/www/html/packages:cached"
 ```
 
-Then add to `composer.json`:
+The `composer.json` is automatically configured with:
 
 ```json
 {
@@ -79,12 +79,4 @@ Install the extension:
 ddev composer require vendor/my_extension:@dev
 ```
 
-### Option 2: Symlink
-
-Create a symlink inside the TYPO3 instance directory:
-
-```bash
-ln -s ../packages typo3-v13/packages
-```
-
-Then use the same `composer.json` configuration as above. The symlink is automatically mounted into the container.
+**Note:** Composer commands should be run inside DDEV (`ddev composer`) to access the mounted packages directory.

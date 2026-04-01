@@ -73,7 +73,6 @@ EOF
   elif [ "${CREATE_PACKAGES_DIR:-0}" = "2" ]; then
     PACKAGES_ABS="$(cd "${SCRIPT_DIR}" && pwd)/packages"
     mkdir -p "${PACKAGES_ABS}"
-    ln -sfn "${PACKAGES_ABS}" packages
     cat > .ddev/docker-compose.packages.yaml << EOF
 services:
   web:
